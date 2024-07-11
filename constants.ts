@@ -382,7 +382,7 @@ const values = [
 
 export const allFilters: Filter[] = [];
 
-for (let i = 1; i < 6; i++) {  // this will generate combo of 1 to 5 values, total = 31 filters
+for (let i = 1; i < 20; i++) {  // this will generate combo of 1 to 5 values, total = 31 filters
   // Generate combinations
   const combinations = getCombinations(values, i);
 
