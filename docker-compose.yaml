@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  poc1:
+    build: .
+    deploy:
+      resources:
+        limits:
+          cpus: '8'
+          memory: 2G
+        reservations:
+          cpus: '4'
+          memory: 1G
+    volumes:
+      - .:/usr/src/app
+    command: ts-node poc1.ts
+
+  poc2:
+    build: .
+    deploy:
+      resources:
+        limits:
+          cpus: '8'
+          memory: 2G
+        reservations:
+          cpus: '4'
+          memory: 1G
+    volumes:
+      - .:/usr/src/app
+    command: ts-node poc2.ts
+
+  poc3:
+    build: .
+    deploy:
+      resources:
+        limits:
+          cpus: '8'
+          memory: 2G
+        reservations:
+          cpus: '4'
+          memory: 1G
+    volumes:
+      - .:/usr/src/app
+    command: ts-node poc3.ts

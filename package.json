@@ -1,0 +1,25 @@
+{
+  "name": "puppeteer-cluster",
+  "version": "2.3.18",
+  "description": "Puppeteer cluster POC",
+  "main": "poc1.ts",
+  "scripts": {
+    "start": "ts-node poc1.ts"
+  },
+  "author": "Turing",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "ejs": "^3.1.8",
+    "fs-extra": "^10.1.0",
+    "pending-xhr-puppeteer": "^2.3.3",
+    "pidusage": "^3.0.2",
+    "powerbi-client": "^2.23.1",
+    "prettier": "^2.7.1",
+    "puppeteer": "^22.12.1",
+    "puppeteer-cluster": "^0.24.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^4.8.4"
+  }
+}

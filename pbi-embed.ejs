@@ -1,0 +1,314 @@
+<html>
+  <head>
+    <style type="text/css">
+      body {
+        margin: 0px !important;
+      }
+
+      iframe {
+        border: 0px;
+      }
+
+      a {
+        text-decoration: none;
+        text-align: center;
+        margin: auto auto;
+        height: 20px;
+        display: block;
+        background-color: #1978d2;
+        border: 1px solid transparent;
+        color: #fff;
+        -webkit-border-radius: 3px;
+        -webkit-transition: all 0.3s ease-in-out;
+        -moz-transition: all 0.3s ease-in-out;
+        transition: all 0.3s ease-in-out;
+        float: left;
+        margin: 5px;
+        vertical-align: middle;
+        line-height: 1.6;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 400;
+        padding: 6px 18px;
+        font-family: sans-serif;
+      }
+
+      a:hover {
+        background-color: #ffffff;
+        color: #1978d2;
+        border-color: #1978d2;
+      }
+    </style>
+  </head>
+
+  <body style="margin: 0px">
+    <div id="reportContainer"></div>
+    <script src="https://microsoft.github.io/PowerBI-JavaScript/demo/node_modules/powerbi-client/dist/powerbi.js"></script>
+    <script type="text/javascript">
+      window.onload = async function () {
+        // const query = window.location.search.substring(1);
+        const accessToken = '<%=accessToken%>';
+        // Read embed application token from Model
+        const dashboardDisplayMode = 'false';
+        // Read embed URL from Model
+        const embedUrl = decodeURIComponent('<%=embedUrl%>');
+
+        // Read report Id from Model
+        const embedReportId = '<%=reportIdentifier%>';
+
+        const models = window['powerbi-client'].models;
+        const embedConfiguration = {
+          type: 'report',
+          tokenType: models.TokenType.Aad,
+          accessToken: accessToken,
+          embedUrl: embedUrl,
+          id: embedReportId,
+          permissions: models.Permissions.All,
+          settings: {
+            filterPaneEnabled: false,
+            bookmarksPaneEnabled: false,
+            navContentPaneEnabled: false,
+          },
+        };
+
+        window.report = powerbi.embed(
+          document.getElementById('reportContainer'),
+          embedConfiguration,
+        );
+
+        // on report loaded event
+        window.report.on('loaded', function (event) {
+          window.report.getPages().then((pages) => {
+            pages[0].setActive();
+            window.reportPages = pages;
+          });
+
+          window.report.on('rendered', function (event) {
+            window.pageRenderEventCounter++;
+            window.reportRendered = true;
+            console.log('Render event called');
+          });
+        });
+      };
+
+      // function to set report filter.
+      // this will be called for each
+      // destination item or userEmail.
+      async function setReportFilter(filters) {
+        if (!window.report) {
+          return false;
+        }
+        try {
+          console.log('setting filters', filters);
+          const models = window['powerbi-client'].models;
+          if (!window.report || !models) {
+            return false;
+          }
+          // we should un-set existing filters.
+          await window.report.updateFilters(models.FiltersOperations.RemoveAll);
+          // add the filters
+          await window.report.updateFilters(models.FiltersOperations.Add, filters);
+          console.log('Report filter was added.');
+          return true;
+        } catch (error) {
+          console.log('setReportFilter failed: ', error);
+          return error;
+        }
+      }
+      // function to get report level filters.
+      // expected to be an array of filters per report.
+      async function isReportRendered() {
+        try {
+          return window.reportRendered;
+        } catch (error) {
+          console.log('setReportFilter failed: ', error);
+          return false;
+        }
+      }
+
+      // function to apply bookmark state
+      // step to call this functions
+      // 1. call the getBookmarks function.
+      // 2. get the bookmark state for matching guid.
+      // 3. apply the bookmark state.
+      async function applyBookmark(bookmarkGuid) {
+        if (!window.report) {
+          return false;
+        }
+        try {
+          await window.report.bookmarksManager.apply(bookmarkGuid);
+          console.log('Bookmark applied from given state.');
+          return true;
+        } catch (error) {
+          console.log(error);
+          return false;
+        }
+      }
+
+      // function to get bookmarks from the report
+      async function getReportBookmarks(){
+        try {
+            let bookmarks = await report.bookmarksManager.getBookmarks();
+            console.log(`Bookmark fetched from given current report.`);
+            return bookmarks;
+        } catch (error) {
+            console.log(error);
+            return 'failed';
+        }
+      }
+
+      // function is responsible to scan the visuals
+      // and find the matching supported visuals.
+      async function getReportVisuals(visualGuid, infoRiverChartGuid) {
+        // Retrieve the page collection and get the visuals for the active page.
+        try {
+          const pages = await window.report.getPages();
+
+          const pageVisualInformation = [];
+          // Retrieve the page that contain the visual. For the sample report it will be the active page
+          for (let index = 0; index < pages.length; index++) {
+            const page = pages[index];
+            const pageData = await page.getVisuals();
+
+            const pageVisuals = pageData.filter((visual) => {
+              return (
+                (visual.type ? visual.type : false) ||
+                (visual.title ? visual.title : false) ||
+                (visual.type ? visual.type : false) ||
+                (visual.title ? visual.title : false)
+              );
+            });
+            const pageVisualNames = pageVisuals.map((item) => item.type || item.title);
+
+            if (pageVisuals.length > 0) {
+              pageVisualInformation.push({
+                pageIndex: index + 1,
+                pageName: page.name,
+                pageDisplayName: page.displayName,
+                pageVisualNames,
+                status: 200,
+              });
+            } else {
+              pageVisualInformation.push({
+                pageIndex: index + 1,
+                pageName: page.name,
+                pageDisplayName: page.displayName,
+                pageVisualNames,
+                status: 400,
+              });
+            }
+          }
+          return {
+            status: 200,
+            pageVisualInformation,
+          };
+        } catch (error) {
+          return {
+            status: 400,
+            error,
+          };
+        }
+      }
+
+      // get the current page data
+      // this API exposes the page name guid
+      async function getCurrentPageId() {
+        try {
+          const currentPage = window.currentPage || 0;
+          const page = window.reportPages[currentPage];
+          return page.name;
+        } catch (error) {
+          console.log(`getCurrentPageId error: `, error);
+          return false;
+        }
+      }
+
+      // get the current page data
+      // this API exposes the page display name
+      async function getCurrentPageName() {
+        try {
+          const currentPage = window.currentPage || 0;
+          const page = window.reportPages[currentPage];
+          return page.displayName;
+        } catch (error) {
+          console.log(`getCurrentPageName error: `, error);
+          return false;
+        }
+      }
+
+      function nextPage() {
+        window.currentPage = window.currentPage || 0;
+        if (!window.reportPages) {
+          return false;
+        }
+        if (window.currentPage < window.reportPages.length - 1) {
+          window.currentPage++;
+          window.reportPages[currentPage].setActive();
+          return true;
+        }
+        return false;
+      }
+
+      function prevPage() {
+        if (!window.reportPages) {
+          return false;
+        }
+        if (window.currentPage > 0) {
+          window.currentPage--;
+          window.reportPages[currentPage].setActive();
+          return true;
+        }
+        return false;
+      }
+
+      function moveToFirstPage() {
+        if (!window.reportPages) {
+          return false;
+        }
+        window.reportPages[0].setActive();
+        window.currentPage = 0;
+        return true;
+      }
+
+      // get the current page data
+      // this API exposes the page data so that we can
+      // use the same.
+      async function getCurrentPageVisibility() {
+        try {
+          const currentPage = window.currentPage || 0;
+          const page = window.reportPages[currentPage];
+          return page.visibility;
+        } catch (error) {
+          console.log(`getCurrentPageVisibility error: `, error);
+          return false;
+        }
+      }
+
+      async function getFilters(){
+        try {
+            const filters = await report.getFilters();
+            console.log(filters);
+        }
+        catch (errors) {
+            console.log(errors);
+        }
+      }
+      // Remove the filters currently applied to the report.
+      async function removeFilters() {
+        try {
+          const models = window['powerbi-client'].models;
+          if (!window.report || !models) {
+            return false;
+          }
+            await window.report.updateFilters(models.FiltersOperations.RemoveAll);
+            console.log("Report filters were removed.");
+            return true
+        }
+        catch (errors) {
+            console.log(errors);
+            return errors
+        }
+      }
+    </script>
+  </body>
+</html>
