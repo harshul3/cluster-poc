@@ -1,16 +1,21 @@
 Puppeteer-Cluster POC
 
+--> Update the "accessToken" into constants/reportDetails
+
 Overview
 
-Provides instructions for setting up and running the Puppeteer Cluster script (poc1.ts) within a Docker container. Script utilizes Puppeteer cluster to load the powerbi report and apply filters to all pages parallelly.
+Provides instructions for setting up and running the Puppeteer Cluster script within a Docker container. 
 
---> Update the "accessToken" from local into constants/reportDetails
+POC1- Script utilizes Puppeteer cluster to load the powerbi report and apply filters to all pages parallelly.
 
-#1 - Build the Docker image using the provided Dockerfile.
+POC2 - To execute single page report but multiple filters combination where browser loaded only once.
 
-    docker build -t cluster-poc .
+POC3 - To execute single page report but multiple filters combination where browser loaded for every filter.
 
-#2 - Run the Docker container with the built image.
+#1 - To run the POC in indivisual docker container :-
 
-    docker run -it --rm cluster-poc
+    docker-compose up poc1.ts
+    docker-compose up poc2.ts
+    docker-compose up poc3.ts
+
 
