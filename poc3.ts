@@ -50,7 +50,7 @@ const testCluster = async () => {
     maxConcurrency: 5,
     timeout: 6000000,
     puppeteerOptions: {
-      headless: false, // Set to false to see the browser in action
+      headless: true, // Set to false to see the browser in action
       args: PUPPETEER_DEFAULT_ARGS,
       executablePath: puppeteer.executablePath(),
     //   defaultViewport: null,
