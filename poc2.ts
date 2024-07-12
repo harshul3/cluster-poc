@@ -94,7 +94,7 @@ const testCluster = async () => {
       await page.waitForSelector("iframe");
       await pendingXHR.waitForAllXhrFinished();
 
-      await sleep(40000); // Wait for all AJAX requests to finish
+      await sleep(30000); // Wait for all AJAX requests to finish
       return page;
     } catch (error) {
       console.error(`Failed to load page: ${error.message}`);
