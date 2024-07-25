@@ -5,7 +5,6 @@ WORKDIR /usr/src/app
 
 ENV NODE_OPTIONS=--max-old-space-size=8192
  
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 
 COPY package.json ./
 COPY tsconfig.json ./
