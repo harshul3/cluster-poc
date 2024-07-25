@@ -37,7 +37,7 @@ const testCluster = async () => {
     puppeteerOptions: {
       headless: true, // Set to false to see the browser in action
       args: PUPPETEER_DEFAULT_ARGS,
-      executablePath: puppeteer.executablePath(),
+      executablePath: '/usr/bin/google-chrome',
       defaultViewport: null,
       protocolTimeout: 700000,
     },
