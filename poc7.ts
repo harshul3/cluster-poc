@@ -1,14 +1,13 @@
 /* eslint-disable no-await-in-loop */
-// To execute multiple pages parallely with applying filters
+// To execute single page report but multiple filters combination
 import { Cluster } from "puppeteer-cluster";
 import { PendingXHR } from "pending-xhr-puppeteer";
 import * as puppeteer from "puppeteer";
 import {
+  allFilters,
   IReportDetails,
   PUPPETEER_DEFAULT_ARGS,
-  detail1,
-  detail2,
-  detail3,
+  report2Details,
 } from "./constants";
 
 import * as Path from "path";
@@ -18,8 +17,6 @@ import * as fs from "fs-extra";
 declare const generatePDFScheduler: any;
 declare const setReportFilter: any;
 declare const visualState: any;
-declare const moveToFirstPage: any;
-declare const nextPage: any;
 
 /**
  * Sleep function to pause execution for a given number of milliseconds.
@@ -28,32 +25,47 @@ declare const nextPage: any;
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
+const logFilePath = "cpu_memory_usage_poc2.log"; // Path to the log file
+
+const logUsage = () => {
+  const memoryUsage = process.memoryUsage();
+  const cpuUsage = process.cpuUsage();
+
+  const logData = `
+Time: ${new Date().toISOString()}
+Memory Usage: ${JSON.stringify(memoryUsage)}
+CPU Usage: ${JSON.stringify(cpuUsage)}
+-----------------------------------
+`;
+
+  fs.appendFileSync(logFilePath, logData, "utf8");
+};
+
 /**
  * Main function to launch and manage the Puppeteer cluster.
  */
 const testCluster = async () => {
+  console.log(`launch cluster`);
   const cluster = await Cluster.launch({
-    concurrency: Cluster.CONCURRENCY_CONTEXT,
+    concurrency: Cluster.CONCURRENCY_PAGE,
     maxConcurrency: 5,
     timeout: 6000000,
     puppeteerOptions: {
-      headless: true, // Set to false to see the browser in action
+      headless: false, // Set to false to see the browser in action
       args: PUPPETEER_DEFAULT_ARGS,
-      executablePath: '/usr/bin/google-chrome',
+      executablePath: puppeteer.executablePath(),
       defaultViewport: null,
       protocolTimeout: 700000,
     },
   });
 
   cluster.task(async ({ page, data }) => {
-    const { report, pageNo, filters } = data;
+    const { report, filters } = data;
 
     try {
+      console.log(`load page`);
       const loadedPage = await loadPage(page, report);
       console.log("Page loaded:", loadedPage);
-
-      // Navigate to the appropriate page based on pageNo
-      await navigateToPage(page, pageNo);
 
       // Apply filters and generate PDF
       await applyFiltersAndGeneratePDF(page, loadedPage, filters);
@@ -84,7 +96,7 @@ const testCluster = async () => {
       await page.waitForSelector("iframe");
       await pendingXHR.waitForAllXhrFinished();
 
-      await sleep(40000); // Wait for all AJAX requests to finish
+      await sleep(30000); // Wait for all AJAX requests to finish
       return page;
     } catch (error) {
       console.error(`Failed to load page: ${error.message}`);
@@ -109,25 +121,6 @@ const testCluster = async () => {
    * @param page - The Puppeteer page instance.
    * @param pageNo - The page number to navigate to.
    */
-  const navigateToPage = async (page, pageNo: number) => {
-    const moveToPage = async (page) => {
-      const result = await page.evaluate(() => moveToFirstPage());
-      await sleep(5000);
-      console.log("Moved to first page:", result);
-    };
-
-    if (pageNo >= 1) await moveToPage(page);
-    if (pageNo >= 2) {
-      const result = await page.evaluate(() => nextPage());
-      await sleep(5000);
-      console.log("Moved to second page:", result);
-    }
-    if (pageNo >= 3) {
-      const result = await page.evaluate(() => nextPage());
-      await sleep(5000);
-      console.log("Moved to third page:", result);
-    }
-  };
 
   /**
    * Apply filters and generate PDF for the loaded page.
@@ -176,11 +169,54 @@ const testCluster = async () => {
     }
   };
 
-  const tasks = [detail1, detail2, detail3];
+  async function batchFilters(allFilters, size: number): Promise<[][]> {
+    if (size <= 0) {
+      throw new Error("Chunk size must be greater than zero");
+    }
+    const result: [][] = [];
+    const partSize = Math.floor(allFilters.length / size);
+    const remainder = allFilters.length % size;
+
+    let startIndex = 0;
+
+    for (let i = 0; i < size; i++) {
+      const currentPartSize = partSize + (i < remainder ? 1 : 0);
+      result.push(allFilters.slice(startIndex, startIndex + currentPartSize));
+      startIndex += currentPartSize;
+    }
+    return result;
+  }
+
+  const batches = await batchFilters(allFilters, 2); // allfilters and number of parts
+  console.log(batches);
+
+  const r2detail1 = {
+    report: report2Details,
+    filters: batches[0],
+  };
+
+  const r2detail2 = {
+    report: report2Details,
+    filters: batches[1],
+  };
+
+  const tasks = [r2detail1, r2detail2];
   await Promise.all(tasks.map((task) => cluster.execute(task)));
 
   await cluster.idle();
   await cluster.close();
 };
 
-testCluster();
+const intervalId = setInterval(logUsage, 10000); // Logs usage every 10 seconds
+
+testCluster()
+  .then(() => {
+    clearInterval(intervalId);
+    console.log("Test cluster completed. Exiting...");
+    process.exit(0);
+  })
+  .catch((error) => {
+    clearInterval(intervalId);
+    console.error("Error in test cluster:", error);
+    process.exit(1);
+  });

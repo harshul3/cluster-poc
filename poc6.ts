@@ -4,11 +4,11 @@ import { Cluster } from "puppeteer-cluster";
 import { PendingXHR } from "pending-xhr-puppeteer";
 import * as puppeteer from "puppeteer";
 import {
-  IReportDetails,
-  PUPPETEER_DEFAULT_ARGS,
   detail1,
   detail2,
   detail3,
+  IReportDetails,
+  PUPPETEER_DEFAULT_ARGS,
 } from "./constants";
 
 import * as Path from "path";
@@ -32,14 +32,15 @@ const sleep = (ms: number): Promise<void> =>
  * Main function to launch and manage the Puppeteer cluster.
  */
 const testCluster = async () => {
+  console.log(`launch cluster`);
   const cluster = await Cluster.launch({
-    concurrency: Cluster.CONCURRENCY_CONTEXT,
+    concurrency: Cluster.CONCURRENCY_PAGE,
     maxConcurrency: 5,
     timeout: 6000000,
     puppeteerOptions: {
-      headless: true, // Set to false to see the browser in action
+      headless: false, // Set to false to see the browser in action
       args: PUPPETEER_DEFAULT_ARGS,
-      executablePath: '/usr/bin/google-chrome',
+      executablePath: puppeteer.executablePath(),
       defaultViewport: null,
       protocolTimeout: 700000,
     },
@@ -47,8 +48,8 @@ const testCluster = async () => {
 
   cluster.task(async ({ page, data }) => {
     const { report, pageNo, filters } = data;
-
     try {
+      console.log(`loading page`);
       const loadedPage = await loadPage(page, report);
       console.log("Page loaded:", loadedPage);
 
@@ -57,6 +58,7 @@ const testCluster = async () => {
 
       // Apply filters and generate PDF
       await applyFiltersAndGeneratePDF(page, loadedPage, filters);
+      await sleep(20000);
     } catch (error) {
       console.error(`Failed to load task: ${error.message}`);
     }
@@ -79,9 +81,10 @@ const testCluster = async () => {
       console.log("Render report completed.");
 
       const pendingXHR = new PendingXHR(page);
-      await page.setContent(pageContent);
       await page.setDefaultNavigationTimeout(0);
-      await page.waitForSelector("iframe");
+      await page.setContent(pageContent);
+      await page.setDefaultTimeout(900000 * 2);
+      // await page.waitForSelector("iframe");
       await pendingXHR.waitForAllXhrFinished();
 
       await sleep(40000); // Wait for all AJAX requests to finish
