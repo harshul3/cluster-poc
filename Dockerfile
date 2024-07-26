@@ -13,6 +13,7 @@ RUN npm install
 RUN npx puppeteer browsers install chrome
 RUN npm install -g typescript ts-node
 RUN npm i -S powerbi-client
+RUN npm i dotenv
 
 COPY constants.ts .
 COPY poc1.ts .
