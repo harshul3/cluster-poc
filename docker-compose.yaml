@@ -2,43 +2,57 @@ version: "3.3"
 
 services:
   poc1:
+    env_file:
+      - .env
     build: .
     volumes:
       - .:/usr/src/app
     command: ts-node poc1.ts
 
   poc2:
+    env_file:
+      - .env
     build: .
     volumes:
       - .:/usr/src/app
     command: ts-node poc2.ts
 
   poc3:
+    env_file:
+      - .env
     build: .
     volumes:
       - .:/usr/src/app
     command: ts-node poc3.ts
 
   poc4:
+    env_file:
+      - .env
     build: .
     volumes:
       - .:/usr/src/app
     command: ts-node poc4.ts
 
   poc5:
+    env_file:
+      - .env
     build: .
     volumes:
       - .:/usr/src/app
     command: ts-node poc5.ts
 
   poc6:
+    env_file:
+      - .env
     build: .
     volumes:
       - .:/usr/src/app
-    command: ts-node poc5.ts
+    command: ts-node poc6.ts
 
   poc7:
+    env_file:
+      - .env
     build: .
     volumes:
       - .:/usr/src/app
-    command: ts-node poc5.ts
+    command: ts-node poc7.ts

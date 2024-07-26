@@ -19,6 +19,10 @@ COPY constants.ts .
 COPY poc1.ts .
 COPY poc2.ts .
 COPY poc3.ts .
+COPY poc4.ts .
+COPY poc5.ts .
+COPY poc6.ts .
+COPY poc7.ts .
 COPY pbi-embed.ejs .
 
 CMD ["ts-node", "poc1.ts"]
