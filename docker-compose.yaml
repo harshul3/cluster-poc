@@ -1,4 +1,4 @@
-version: '3.3'
+version: "3.3"
 
 services:
   poc1:
@@ -26,6 +26,18 @@ services:
     command: ts-node poc4.ts
 
   poc5:
+    build: .
+    volumes:
+      - .:/usr/src/app
+    command: ts-node poc5.ts
+
+  poc6:
+    build: .
+    volumes:
+      - .:/usr/src/app
+    command: ts-node poc5.ts
+
+  poc7:
     build: .
     volumes:
       - .:/usr/src/app
