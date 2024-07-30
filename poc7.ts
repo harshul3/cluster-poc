@@ -48,7 +48,7 @@ const testCluster = async () => {
   console.log(`launch cluster`);
   const cluster = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_PAGE,
-    maxConcurrency: 5,
+    maxConcurrency: 2,
     timeout: 6000000,
     puppeteerOptions: {
       headless: true, // Set to false to see the browser in action
