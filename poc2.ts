@@ -47,7 +47,7 @@ CPU Usage: ${JSON.stringify(cpuUsage)}
 const testCluster = async () => {
   const cluster = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_CONTEXT,
-    maxConcurrency: 1,
+    maxConcurrency: 2,
     timeout: 6000000,
     puppeteerOptions: {
       headless: true, // Set to false to see the browser in action
